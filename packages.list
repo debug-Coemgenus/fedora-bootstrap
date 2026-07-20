@@ -14,3 +14,4 @@ podman 						# Containers
 sublime-text				# Text editor
 stow 						# For dotfiles management
 Thunar						# File manager
+firefox						# Browser
