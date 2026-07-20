@@ -13,3 +13,4 @@ podman 						# Containers
 stow 						# For dotfiles management
 Thunar						# File manager
 firefox						# Browser
+lazygit						# Git TUI
