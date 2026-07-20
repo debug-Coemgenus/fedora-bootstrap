@@ -1,0 +1,33 @@
+# XDG Base Directory Specification
+export XDG_CONFIG_HOME="$HOME/.config"     # User configs (default, but explicit)
+export XDG_DATA_HOME="$HOME/.local/share"  # User data files (default, but explicit)
+export XDG_STATE_HOME="$HOME/.local/state" # Logs, history, recent files
+export XDG_CACHE_HOME="$HOME/.cache"       # Non-essential cached data
+
+# --- Dev Tools ---
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+export GOPATH="$XDG_DATA_HOME/go"
+export GOMODCACHE="$XDG_DATA_HOME/go/pkg/mod"
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+export NODE_REPL_HISTORY="$XDG_STATE_HOME/node/repl_history"
+export PYTHON_HISTORY="$XDG_STATE_HOME/python/history"    # Python 3.13+
+export PYTHONSTARTUP="$XDG_CONFIG_HOME/python/pythonrc"   # Older Python workaround
+export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME/bundle"
+export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundle"
+export GEM_HOME="$XDG_DATA_HOME/gem"
+export GEM_SPEC_CACHE="$XDG_CACHE_HOME/gem"
+export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle"
+export NUGET_PACKAGES="$XDG_DATA_HOME/nuget"
+export STACK_ROOT="$XDG_DATA_HOME/stack"
+
+# --- Misc Apps ---
+export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+export WGETRC="$XDG_CONFIG_HOME/wget/wgetrc"
+export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
+export MYSQL_HISTFILE="$XDG_STATE_HOME/mysql/history"
+export PSQL_HISTORY="$XDG_STATE_HOME/psql/history"
+export SQLITE_HISTORY="$XDG_STATE_HOME/sqlite/history"
+export CUDA_CACHE_PATH="$XDG_CACHE_HOME/nv"
+export ANSIBLE_HOME="$XDG_CONFIG_HOME/ansible"
+export W3M_DIR="$XDG_STATE_HOME/w3m"
