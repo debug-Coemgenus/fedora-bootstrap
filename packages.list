@@ -8,10 +8,8 @@ xdg-desktop-portal-gnome	# Needed by niri
 dms							# DankMaterialShell for a good out-of-the-box Niri WM configuration
 speedcrunch 				# Calculator
 Zim							# Desktop wiki program
-lazygit						# Git TUI
 tldr						# Tool for TLDR's of man pages
 podman 						# Containers
-sublime-text				# Text editor
 stow 						# For dotfiles management
 Thunar						# File manager
 firefox						# Browser
