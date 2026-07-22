@@ -153,3 +153,14 @@ log "running configure.sh"
 bash "$SCRIPT_DIR/configure.sh"
 
 log "bootstrap complete"
+printf '\n'
+log "Next steps"
+log "────────────────────────────────────────"
+log "SDDM + GNOME Keyring"
+log "  For SDDM to unlock the keyring on login, edit:"
+log "    /etc/pam.d/sddm"
+log "  Find:"
+log "    -auth  optional  pam_gnome_keyring.so"
+log "  Remove the leading '-' so it becomes:"
+log "    auth   optional  pam_gnome_keyring.so"
+printf '\n'
