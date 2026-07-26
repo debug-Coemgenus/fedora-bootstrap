@@ -17,6 +17,7 @@ fail() { printf '[configure:niri] ERROR: %s\n' "$*" >&2; exit 1; }
 log "enabling sddm"
 systemctl enable --force sddm.service
 systemctl set-default graphical.target
+systemctl --user add-wants niri.service dms
 
 # --- niri portals configuration -----------------------------------------------
 
