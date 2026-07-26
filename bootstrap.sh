@@ -223,8 +223,12 @@ if [[ "$SELECTED_DE" == "niri" ]]; then
     log "  For SDDM to unlock the keyring on login, edit:"
     log "    /etc/pam.d/sddm"
     log "  Find:"
-    log "    -auth  optional  pam_gnome_keyring.so"
+    log "    -auth     optional  pam_gnome_keyring.so"
     log "  Remove the leading '-' so it becomes:"
-    log "    auth   optional  pam_gnome_keyring.so"
+    log "    auth      optional  pam_gnome_keyring.so"
+    log "  Find:"
+    log "    -session  optional  pam_gnome_keyring.so  auto_start"
+    log "  Remove the leading '-' so it becomes:"
+    log "    session   optional  pam_gnome_keyring.so  auto_start"
     printf '\n'
 fi
