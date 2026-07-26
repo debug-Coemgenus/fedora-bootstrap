@@ -3,12 +3,14 @@
 # bootstrap.sh - Fedora system bootstrap.
 #
 # Steps:
-#   1. enable the COPR repositories listed in coprs.list
-#   2. install the packages listed in packages.list
-#   3. install/update the DevPod CLI
-#   4. create the personal directory structure in the invoking user's home
-#   5. append xdg-spec.txt to the invoking user's ~/.bash_profile
-#   6. run configure.sh
+#   1. prompt for desktop environment selection
+#   2. enable the COPR repositories listed in coprs.list (+ DE-specific)
+#   3. install the packages listed in packages.list (+ DE-specific)
+#   4. install/update the DevPod CLI
+#   5. create the personal directory structure in the invoking user's home
+#   6. append xdg-spec.txt to the invoking user's ~/.bash_profile
+#   7. run configure.sh (common)
+#   8. run de/<name>/configure.sh (DE-specific, if selected)
 #
 # List file format: one entry per line. Blank lines and '#' comments
 # (whole-line or inline) are ignored, e.g.:
@@ -18,6 +20,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DE_DIR="$SCRIPT_DIR/de"
 COPRS_FILE="$SCRIPT_DIR/coprs.list"
 PACKAGES_FILE="$SCRIPT_DIR/packages.list"
 XDG_FILE="$SCRIPT_DIR/xdg-spec.txt"
@@ -25,33 +28,66 @@ XDG_FILE="$SCRIPT_DIR/xdg-spec.txt"
 log()  { printf '[bootstrap] %s\n' "$*"; }
 fail() { printf '[bootstrap] ERROR: %s\n' "$*" >&2; exit 1; }
 
-# as_user CMD... - run a command as the invoking user, with their home set.
-# runuser preserves the caller's environment, and sudo may leave HOME
-# pointing at /root - so set HOME explicitly.
 as_user() {
     runuser -u "$SUDO_USER" -- env HOME="$USER_HOME" "$@"
 }
 
-# read_list FILE - print the entries of a list file, one per line.
-# Blank lines and '#' comments (whole-line and inline) are stripped.
 read_list() {
     local line
-    # '|| [[ -n "$line" ]]' also handles a last line without trailing newline
     while IFS= read -r line || [[ -n "$line" ]]; do
-        line="${line%%#*}"                       # strip comments
-        line="${line#"${line%%[![:space:]]*}"}"  # trim leading whitespace
-        line="${line%"${line##*[![:space:]]}"}"  # trim trailing whitespace
+        line="${line%%#*}"
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
         if [[ -n "$line" ]]; then
             printf '%s\n' "$line"
         fi
     done < "$1"
 }
 
+# --- Desktop environment selection --------------------------------------------
+
+SELECTED_DE=""
+
+select_de() {
+    local de_dirs=()
+
+    if [[ -d "$DE_DIR" ]]; then
+        for d in "$DE_DIR"/*/; do
+            [[ -d "$d" ]] && de_dirs+=("$(basename "$d")")
+        done
+    fi
+
+    printf '\n[bootstrap] Select desktop environment:\n'
+    printf '  1) Niri\n'
+    printf '  2) None\n'
+    printf '\nChoice [1-2]: '
+
+    local choice
+    read -r choice
+
+    case "$choice" in
+        1)
+            if [[ -d "$DE_DIR/niri" ]]; then
+                SELECTED_DE="niri"
+            else
+                fail "niri module not found in $DE_DIR/niri"
+            fi
+            ;;
+        2)
+            SELECTED_DE="none"
+            ;;
+        *)
+            fail "invalid selection: '$choice' (expected 1 or 2)"
+            ;;
+    esac
+
+    log "selected desktop environment: $SELECTED_DE"
+}
+
 # --- Assertions -------------------------------------------------------------
 
 [[ $EUID -eq 0 ]]         || fail "must be run as root (try: sudo $0)"
 
-# Several steps write to the home directory of the user who invoked sudo.
 [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]] \
     || fail "SUDO_USER not set - run as 'sudo ./bootstrap.sh' from your user account"
 USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)" || fail "user not found: $SUDO_USER"
@@ -59,30 +95,49 @@ USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)" || fail "user not found:
 
 [[ -r /etc/os-release ]]  || fail "cannot read /etc/os-release"
 
-# shellcheck source=/dev/null
 . /etc/os-release
 [[ "${ID:-}" == "fedora" ]] || fail "only Fedora is supported (detected: '${ID:-unknown}')"
 
 command -v dnf >/dev/null 2>&1 || fail "dnf not found in PATH"
-[[ -f "$COPRS_FILE" ]]         || fail "missing file: $COPRS_FILE"
 [[ -f "$PACKAGES_FILE" ]]      || fail "missing file: $PACKAGES_FILE"
 [[ -f "$XDG_FILE" ]]           || fail "missing file: $XDG_FILE"
 
-log "Fedora ${VERSION_ID:-?} detected - starting bootstrap"
+select_de
+
+log "Fedora ${VERSION_ID:-?} detected - starting bootstrap (DE: $SELECTED_DE)"
 
 # --- Enable COPR repositories ------------------------------------------------
 
-# 'dnf copr' is provided by dnf-plugins-core
 dnf install -y dnf-plugins-core
 
-while IFS= read -r repo; do
-    log "enabling COPR: $repo"
-    dnf copr enable -y "$repo"
-done < <(read_list "$COPRS_FILE")
+if [[ -f "$COPRS_FILE" ]]; then
+    while IFS= read -r repo; do
+        log "enabling COPR: $repo"
+        dnf copr enable -y "$repo"
+    done < <(read_list "$COPRS_FILE")
+fi
+
+if [[ "$SELECTED_DE" != "none" ]]; then
+    DE_COPRS="$DE_DIR/$SELECTED_DE/coprs.list"
+    if [[ -f "$DE_COPRS" ]]; then
+        while IFS= read -r repo; do
+            log "enabling COPR ($SELECTED_DE): $repo"
+            dnf copr enable -y "$repo"
+        done < <(read_list "$DE_COPRS")
+    fi
+fi
 
 # --- Install packages ---------------------------------------------------------
 
 mapfile -t packages < <(read_list "$PACKAGES_FILE")
+
+if [[ "$SELECTED_DE" != "none" ]]; then
+    DE_PACKAGES="$DE_DIR/$SELECTED_DE/packages.list"
+    if [[ -f "$DE_PACKAGES" ]]; then
+        mapfile -t de_packages < <(read_list "$DE_PACKAGES")
+        packages+=("${de_packages[@]}")
+    fi
+fi
 
 if ((${#packages[@]} > 0)); then
     log "installing ${#packages[@]} package(s)"
@@ -92,7 +147,6 @@ else
 fi
 
 # --- Install DevPod CLI ---------------------------------------------------------
-# Downloads the latest release; re-running also updates an existing install.
 
 command -v curl >/dev/null 2>&1 || fail "curl not found in PATH"
 [[ "$(uname -m)" == "x86_64" ]] \
@@ -114,7 +168,6 @@ as_user mkdir -p \
     "$USER_HOME/Projects" \
     "$USER_HOME/Programs/executables"
 
-# Add Programs/executables to PATH (prepended, so it takes priority)
 BASHRC="$USER_HOME/.bashrc"
 PATH_MARKER="# fedora-bootstrap: executables-path"
 
@@ -126,7 +179,6 @@ else
         printf '\n%s\n' "$PATH_MARKER"
         printf '%s\n' 'export PATH="$HOME/Programs/executables:$PATH"'
     } >> "$BASHRC"
-    # the file may have been created by root - give it to the real user
     chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$BASHRC"
 fi
 
@@ -143,24 +195,36 @@ else
         printf '\n%s\n' "$XDG_MARKER"
         cat "$XDG_FILE"
     } >> "$BASH_PROFILE"
-    # the file may have been created by root - give it to the real user
     chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$BASH_PROFILE"
 fi
 
 # --- Post-install configuration ------------------------------------------------
 
-log "running configure.sh"
+log "running configure.sh (common)"
 bash "$SCRIPT_DIR/configure.sh"
 
+if [[ "$SELECTED_DE" != "none" ]]; then
+    DE_CONFIGURE="$DE_DIR/$SELECTED_DE/configure.sh"
+    if [[ -f "$DE_CONFIGURE" ]]; then
+        log "running $SELECTED_DE configuration"
+        bash "$DE_CONFIGURE"
+    fi
+fi
+
 log "bootstrap complete"
-printf '\n'
-log "Next steps"
-log "────────────────────────────────────────"
-log "SDDM + GNOME Keyring"
-log "  For SDDM to unlock the keyring on login, edit:"
-log "    /etc/pam.d/sddm"
-log "  Find:"
-log "    -auth  optional  pam_gnome_keyring.so"
-log "  Remove the leading '-' so it becomes:"
-log "    auth   optional  pam_gnome_keyring.so"
-printf '\n'
+
+# --- Post-install instructions --------------------------------------------------
+
+if [[ "$SELECTED_DE" == "niri" ]]; then
+    printf '\n'
+    log "Next steps"
+    log "────────────────────────────────────────"
+    log "SDDM + GNOME Keyring"
+    log "  For SDDM to unlock the keyring on login, edit:"
+    log "    /etc/pam.d/sddm"
+    log "  Find:"
+    log "    -auth  optional  pam_gnome_keyring.so"
+    log "  Remove the leading '-' so it becomes:"
+    log "    auth   optional  pam_gnome_keyring.so"
+    printf '\n'
+fi
