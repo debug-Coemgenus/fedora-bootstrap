@@ -7,3 +7,4 @@ podman 						# Containers
 stow 						# For dotfiles management
 firefox						# Browser
 lazygit						# Git TUI
+git-delta					# Pager for Lazygit
