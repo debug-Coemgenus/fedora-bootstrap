@@ -174,20 +174,23 @@ as_user mkdir -p \
     "$USER_HOME/Projects" \
     "$USER_HOME/Programs/exe"
 
-# --- Append xdg-spec.txt to the user's .bash_profile -----------------------------
+# --- Install environment.d configuration --------------------------------------
 
-BASH_PROFILE="$USER_HOME/.bash_profile"
-XDG_MARKER="# fedora-bootstrap: xdg-spec"
+ENVIRONMENT_DIR="$USER_HOME/.config/environment.d"
+ENVIRONMENT_FILE="$ENVIRONMENT_DIR/90-fedora-bootstrap.conf"
+ENVIRONMENT_MARKER="# fedora-bootstrap: xdg-spec"
 
-if grep -qF "$XDG_MARKER" "$BASH_PROFILE" 2>/dev/null; then
-    log "xdg-spec already in $BASH_PROFILE - skipping"
+as_user mkdir -p "$ENVIRONMENT_DIR"
+
+if grep -qF "$ENVIRONMENT_MARKER" "$ENVIRONMENT_FILE" 2>/dev/null; then
+    log "xdg-spec already in $ENVIRONMENT_FILE - skipping"
 else
-    log "appending xdg-spec.txt to $BASH_PROFILE"
+    log "installing xdg-spec.txt as $ENVIRONMENT_FILE"
     {
-        printf '\n%s\n' "$XDG_MARKER"
+        printf '%s\n' "$ENVIRONMENT_MARKER"
         cat "$XDG_FILE"
-    } >> "$BASH_PROFILE"
-    chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$BASH_PROFILE"
+    } >> "$ENVIRONMENT_FILE"
+    chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$ENVIRONMENT_FILE"
 fi
 
 # --- Post-install configuration ------------------------------------------------
