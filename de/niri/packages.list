@@ -4,5 +4,6 @@ niri						# Window manager
 xdg-desktop-portal-gtk		# Needed by niri
 gnome-keyring				# Needed by niri
 xdg-desktop-portal-gnome	# Needed by niri
+wget2-wget				# Needed by niri portal configuration
 dms							# DankMaterialShell for niri WM configuration
 Thunar						# File manager
