@@ -8,9 +8,23 @@ DE_DIR="$SCRIPT_DIR/de"
 COPRS_FILE="$SCRIPT_DIR/coprs.list"
 PACKAGES_FILE="$SCRIPT_DIR/packages.list"
 XDG_FILE="$SCRIPT_DIR/xdg-spec.txt"
+ALLOWED_FEDORA_VERSIONS=("44")
+SKIP_VERSION_CONSTRAINT=false
 
 log()  { printf '[bootstrap] %s\n' "$*"; }
 fail() { printf '[bootstrap] ERROR: %s\n' "$*" >&2; exit 1; }
+
+while (($# > 0)); do
+    case "$1" in
+        --skip-version-constraint)
+            SKIP_VERSION_CONSTRAINT=true
+            ;;
+        *)
+            fail "unknown argument: '$1' (expected --skip-version-constraint)"
+            ;;
+    esac
+    shift
+done
 
 as_user() {
     runuser -u "$SUDO_USER" -- env HOME="$USER_HOME" "$@"
@@ -81,6 +95,21 @@ USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)" || fail "user not found:
 
 . /etc/os-release
 [[ "${ID:-}" == "fedora" ]] || fail "only Fedora is supported (detected: '${ID:-unknown}')"
+
+if [[ "$SKIP_VERSION_CONSTRAINT" == false ]]; then
+    version_allowed=false
+    for allowed_version in "${ALLOWED_FEDORA_VERSIONS[@]}"; do
+        if [[ "${VERSION_ID:-}" == "$allowed_version" ]]; then
+            version_allowed=true
+            break
+        fi
+    done
+
+    [[ "$version_allowed" == true ]] \
+        || fail "Fedora ${VERSION_ID:-unknown} is not supported (allowed: ${ALLOWED_FEDORA_VERSIONS[*]}); use --skip-version-constraint to override"
+else
+    log "skipping Fedora version constraint"
+fi
 
 command -v dnf >/dev/null 2>&1 || fail "dnf not found in PATH"
 [[ -f "$PACKAGES_FILE" ]]      || fail "missing file: $PACKAGES_FILE"
