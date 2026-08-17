@@ -1,21 +1,5 @@
 #!/usr/bin/env bash
-#
 # bootstrap.sh - Fedora system bootstrap.
-#
-# Steps:
-#   1. prompt for desktop environment selection
-#   2. enable the COPR repositories listed in coprs.list (+ DE-specific)
-#   3. install the packages listed in packages.list (+ DE-specific)
-#   4. install/update the DevPod CLI
-#   5. create the personal directory structure in the invoking user's home
-#   6. append xdg-spec.txt to the invoking user's ~/.bash_profile
-#   7. run configure.sh (common)
-#   8. run de/<name>/configure.sh (DE-specific, if selected)
-#
-# List file format: one entry per line. Blank lines and '#' comments
-# (whole-line or inline) are ignored, e.g.:
-#
-#   vim-enhanced    # the editor
 
 set -euo pipefail
 
@@ -145,20 +129,6 @@ if ((${#packages[@]} > 0)); then
 else
     log "no packages to install"
 fi
-
-# --- Install DevPod CLI ---------------------------------------------------------
-
-command -v curl >/dev/null 2>&1 || fail "curl not found in PATH"
-[[ "$(uname -m)" == "x86_64" ]] \
-    || fail "the devpod download URL below is amd64-only (detected arch: $(uname -m))"
-
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
-
-log "downloading devpod CLI"
-curl -fSL -o "$TMP_DIR/devpod" \
-    "https://github.com/loft-sh/devpod/releases/latest/download/devpod-linux-amd64"
-install -c -m 0755 "$TMP_DIR/devpod" /usr/local/bin
 
 # --- Create personal directory structure -------------------------------------------
 
