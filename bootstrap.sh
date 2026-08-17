@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DE_DIR="$SCRIPT_DIR/de"
 COPRS_FILE="$SCRIPT_DIR/coprs.list"
 PACKAGES_FILE="$SCRIPT_DIR/packages.list"
+FLATPAKS_FILE="$SCRIPT_DIR/flatpaks.list"
 XDG_FILE="$SCRIPT_DIR/xdg-spec.txt"
 ALLOWED_FEDORA_VERSIONS=("44")
 SKIP_VERSION_CONSTRAINT=false
@@ -113,6 +114,7 @@ fi
 
 command -v dnf >/dev/null 2>&1 || fail "dnf not found in PATH"
 [[ -f "$PACKAGES_FILE" ]]      || fail "missing file: $PACKAGES_FILE"
+[[ -f "$FLATPAKS_FILE" ]]      || fail "missing file: $FLATPAKS_FILE"
 [[ -f "$XDG_FILE" ]]           || fail "missing file: $XDG_FILE"
 
 select_de
@@ -164,6 +166,20 @@ if ((${#packages[@]} > 0)); then
     dnf install -y "${packages[@]}"
 else
     log "no packages to install"
+fi
+
+# --- Install Flatpaks ----------------------------------------------------------
+
+flatpak remote-add --if-not-exists flathub \
+    https://dl.flathub.org/repo/flathub.flatpakrepo
+
+mapfile -t flatpaks < <(read_list "$FLATPAKS_FILE")
+
+if ((${#flatpaks[@]} > 0)); then
+    log "installing ${#flatpaks[@]} Flatpak(s)"
+    flatpak install -y flathub "${flatpaks[@]}"
+else
+    log "no Flatpaks to install"
 fi
 
 # --- Create personal directory structure -------------------------------------------
