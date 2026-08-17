@@ -136,21 +136,7 @@ log "creating personal directories in $USER_HOME"
 as_user mkdir -p \
     "$USER_HOME/Education" \
     "$USER_HOME/Projects" \
-    "$USER_HOME/Programs/executables"
-
-BASHRC="$USER_HOME/.bashrc"
-PATH_MARKER="# fedora-bootstrap: executables-path"
-
-if grep -qF "$PATH_MARKER" "$BASHRC" 2>/dev/null; then
-    log "executables PATH already in $BASHRC - skipping"
-else
-    log "adding Programs/executables to PATH in $BASHRC"
-    {
-        printf '\n%s\n' "$PATH_MARKER"
-        printf '%s\n' 'export PATH="$HOME/Programs/executables:$PATH"'
-    } >> "$BASHRC"
-    chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$BASHRC"
-fi
+    "$USER_HOME/Programs/exe"
 
 # --- Append xdg-spec.txt to the user's .bash_profile -----------------------------
 
