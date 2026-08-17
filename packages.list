@@ -2,9 +2,10 @@
 kitty						# Terminal
 speedcrunch 				# Calculator
 Zim							# Desktop wiki program
-tldr						# Tool for TLDR's of man pages
+tldr						# TUI tl;dr's for commands
 podman 						# Containers
-stow 						# For dotfiles management
+stow 						# Dotfiles management
 firefox						# Browser
 lazygit						# Git TUI
 git-delta					# Pager for Lazygit
+darkhttpd                   # Lightweight HTTP server made in C
