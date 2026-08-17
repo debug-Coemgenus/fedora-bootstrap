@@ -92,7 +92,14 @@ log "Fedora ${VERSION_ID:-?} detected - starting bootstrap (DE: $SELECTED_DE)"
 
 # --- Enable COPR repositories ------------------------------------------------
 
-dnf install -y dnf-plugins-core
+DNF_VERSION="$(dnf --version 2>/dev/null)" || fail "could not determine dnf version"
+if [[ "$DNF_VERSION" == *dnf5* ]]; then
+    DNF_COPR_PLUGIN_PACKAGE="dnf5-plugins"
+else
+    DNF_COPR_PLUGIN_PACKAGE="dnf-plugins-core"
+fi
+
+dnf install -y "$DNF_COPR_PLUGIN_PACKAGE"
 
 if [[ -f "$COPRS_FILE" ]]; then
     while IFS= read -r repo; do
