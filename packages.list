@@ -10,3 +10,5 @@ lazygit						# Git TUI
 git-delta					# Pager for Lazygit
 darkhttpd                   # Lightweight HTTP server made in C
 flatpak                     # Flatpak application manager
+eza			    # ls replacement
+nnn		  	    # TUI File manager
